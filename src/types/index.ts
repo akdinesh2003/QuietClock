@@ -9,6 +9,7 @@ export interface Session {
   date: string; // ISO string
   duration: number; // in minutes
   mode: TimerMode;
+  focusRating?: number; // 1-5 scale
 }
 
 export interface Settings {

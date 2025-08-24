@@ -14,6 +14,7 @@ import { AnalyticsSheet } from "./analytics-sheet";
 import { RefreshCw, History } from "lucide-react";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { ReflectionDialog } from "./reflection-dialog";
 
 const DEFAULT_SETTINGS: Settings = {
   focusDuration: 25,
@@ -33,6 +34,9 @@ export function ZenFocusPage() {
   const [isActive, setIsActive] = useState(false);
   const [completedCycles, setCompletedCycles] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [showReflection, setShowReflection] = useState(false);
+  const [lastSession, setLastSession] = useState<Session | null>(null);
+
   const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -62,7 +66,13 @@ export function ZenFocusPage() {
       duration: durationInMinutes,
       mode,
     };
-    setSessions(prev => [...prev, newSession]);
+    
+    if (mode === 'focus') {
+        setLastSession(newSession);
+        setShowReflection(true);
+    } else {
+        setSessions(prev => [...prev, newSession]);
+    }
 
     if (mode === "focus") {
       const newCompletedCycles = completedCycles + 1;
@@ -77,6 +87,14 @@ export function ZenFocusPage() {
     }
     setIsActive(false);
   }, [mode, durationInMinutes, setSessions, completedCycles, settings.longBreakInterval]);
+
+  const handleReflectionSubmit = (rating: number) => {
+    if (lastSession) {
+      setSessions(prev => [...prev, { ...lastSession, focusRating: rating }]);
+    }
+    setShowReflection(false);
+    setLastSession(null);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -114,13 +132,12 @@ export function ZenFocusPage() {
     const audio = ambientAudioRef.current;
     if (audio) {
       if (isActive && settings.ambientSound !== 'none') {
-        // Check if audio is paused before playing to avoid interruption errors
-        if (audio.paused) {
-          audio.play().catch(error => {
-              // AbortError is expected if another action interrupts playback, so we can ignore it.
-              if (error.name !== 'AbortError') {
-                  console.error("Error playing ambient sound:", error);
-              }
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            if (error.name !== 'AbortError') {
+              console.error("Error playing ambient sound:", error);
+            }
           });
         }
       } else {
@@ -280,6 +297,13 @@ export function ZenFocusPage() {
       <aside className={`fixed top-0 right-0 h-full w-80 bg-card/20 backdrop-blur-lg border-l border-border/20 shadow-2xl transition-transform duration-300 ease-in-out ${showHistory ? 'translate-x-0' : 'translate-x-full'}`}>
         <AnalyticsSheet sessions={sessions} />
       </aside>
+
+      <ReflectionDialog
+        isOpen={showReflection}
+        onClose={() => setShowReflection(false)}
+        onSubmit={handleReflectionSubmit}
+      />
+
     </div>
   );
 }
