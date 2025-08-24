@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -26,9 +27,9 @@ const DEFAULT_SETTINGS: Settings = {
   soundVolume: 0.5,
 };
 
-export function ZenFocusPage() {
-  const [settings, setSettings] = useLocalStorage<Settings>("zenfocus-settings", DEFAULT_SETTINGS);
-  const [sessions, setSessions] = useLocalStorage<Session[]>("zenfocus-sessions", []);
+export function QuietClockPage() {
+  const [settings, setSettings] = useLocalStorage<Settings>("quietclock-settings", DEFAULT_SETTINGS);
+  const [sessions, setSessions] = useLocalStorage<Session[]>("quietclock-sessions", []);
   
   const [mode, setMode] = useState<TimerMode>("focus");
   const [isActive, setIsActive] = useState(false);
@@ -130,20 +131,22 @@ export function ZenFocusPage() {
 
   useEffect(() => {
     const audio = ambientAudioRef.current;
-    if (audio) {
-      if (isActive && settings.ambientSound !== 'none') {
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            if (error.name !== 'AbortError') {
+    const handleAudio = async () => {
+      if (audio) {
+        if (isActive && settings.ambientSound !== 'none') {
+          try {
+            await audio.play();
+          } catch (error) {
+            if ((error as DOMException).name !== 'AbortError') {
               console.error("Error playing ambient sound:", error);
             }
-          });
+          }
+        } else {
+          audio.pause();
         }
-      } else {
-        audio.pause();
       }
-    }
+    };
+    handleAudio();
   }, [isActive, settings.ambientSound]);
 
 
@@ -167,7 +170,11 @@ export function ZenFocusPage() {
       newAudio.volume = settings.soundVolume;
       ambientAudioRef.current = newAudio;
       if (isActive) {
-        newAudio.play().catch(e => console.error("Error playing ambient sound:", e));
+        newAudio.play().catch(e => {
+             if ((e as DOMException).name !== 'AbortError') {
+              console.error("Error playing ambient sound:", e)
+            }
+        });
       }
     } else {
        ambientAudioRef.current = null;
