@@ -50,20 +50,6 @@ npm start
 
 ---
 
-## 📁 Folder Structure
-
-```
-QuietClock/
-├── index.html
-├── style.css
-├── script.js
-├── assets/
-│   └── icons, sounds, themes
-└── README.md
-```
-
----
-
 ## 💡 Ideal For
 
 - Developers seeking a clean Pomodoro-style timer  
