@@ -2,6 +2,8 @@ export type TimerMode = "focus" | "shortBreak" | "longBreak";
 
 export type Theme = "default" | "forest" | "ocean" | "dusk";
 
+export type AmbientSound = "none" | "rain" | "forest" | "whitenoise";
+
 export interface Session {
   id: number;
   date: string; // ISO string
@@ -15,4 +17,6 @@ export interface Settings {
   longBreakDuration: number;
   longBreakInterval: number;
   selectedTheme: Theme;
+  ambientSound: AmbientSound;
+  soundVolume: number;
 }

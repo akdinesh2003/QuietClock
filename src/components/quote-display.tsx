@@ -16,7 +16,7 @@ export function QuoteDisplay() {
   }
 
   return (
-    <div className="w-full max-w-lg text-center mt-8">
+    <div className="w-full max-w-lg text-center">
       <blockquote className="text-lg md:text-xl text-muted-foreground italic">
         "{quote.quote}"
       </blockquote>

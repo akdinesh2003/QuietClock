@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import {
   Card,
@@ -14,7 +14,8 @@ import { Header } from "./header";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
 import { QuoteDisplay } from "./quote-display";
-import type { Settings, Session, TimerMode } from "@/types";
+import type { Settings, Session, TimerMode, AmbientSound } from "@/types";
+import { AmbientSoundPlayer } from "./ambient-sound-player";
 
 const DEFAULT_SETTINGS: Settings = {
   focusDuration: 25,
@@ -22,6 +23,8 @@ const DEFAULT_SETTINGS: Settings = {
   longBreakDuration: 15,
   longBreakInterval: 4,
   selectedTheme: "default",
+  ambientSound: "none",
+  soundVolume: 0.5,
 };
 
 export function ZenFocusPage() {
@@ -31,6 +34,8 @@ export function ZenFocusPage() {
   const [mode, setMode] = useState<TimerMode>("focus");
   const [isActive, setIsActive] = useState(false);
   const [completedCycles, setCompletedCycles] = useState(0);
+  const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const durationInMinutes = useMemo(() => {
     switch (mode) {
@@ -74,13 +79,19 @@ export function ZenFocusPage() {
   }, [mode, durationInMinutes, setSessions, completedCycles, settings.longBreakInterval]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+        notificationAudioRef.current = new Audio('/notification.mp3');
+    }
+  }, []);
+
+  useEffect(() => {
     setSecondsLeft(durationInMinutes * 60);
   }, [durationInMinutes, settings]);
   
   useEffect(() => {
     if (secondsLeft === 0) {
       handleSessionEnd();
-      new Audio('/notification.mp3').play().catch(e => console.error("Error playing sound:", e));
+      notificationAudioRef.current?.play().catch(e => console.error("Error playing sound:", e));
     }
   }, [secondsLeft, handleSessionEnd]);
 
@@ -97,6 +108,47 @@ export function ZenFocusPage() {
       if (interval) clearInterval(interval);
     };
   }, [isActive, secondsLeft]);
+
+  useEffect(() => {
+    if (ambientAudioRef.current) {
+        if (isActive && settings.ambientSound !== 'none') {
+            ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
+        } else {
+            ambientAudioRef.current.pause();
+        }
+    }
+  }, [isActive, settings.ambientSound]);
+
+  useEffect(() => {
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.volume = settings.soundVolume;
+    }
+  }, [settings.soundVolume]);
+
+  const handleSoundChange = (sound: AmbientSound) => {
+    handleSettingsChange({ ambientSound: sound });
+    if (ambientAudioRef.current) {
+        if (sound === 'none') {
+            ambientAudioRef.current.pause();
+        } else {
+            const newAudio = new Audio(`/${sound}.mp3`);
+            newAudio.loop = true;
+            newAudio.volume = settings.soundVolume;
+            ambientAudioRef.current = newAudio;
+            if(isActive) {
+                ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
+            }
+        }
+    } else if (sound !== 'none') {
+        const newAudio = new Audio(`/${sound}.mp3`);
+        newAudio.loop = true;
+        newAudio.volume = settings.soundVolume;
+        ambientAudioRef.current = newAudio;
+        if(isActive) {
+            ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
+        }
+    }
+  };
   
   const resetTimer = useCallback(() => {
     setIsActive(false);
@@ -155,7 +207,14 @@ export function ZenFocusPage() {
           />
         </CardContent>
       </Card>
-      <QuoteDisplay />
+       <div className="w-full max-w-lg flex flex-col items-center mt-8">
+        <QuoteDisplay />
+        <AmbientSoundPlayer 
+          settings={settings} 
+          onSettingsChange={handleSettingsChange}
+          onSoundChange={handleSoundChange}
+        />
+      </div>
     </>
   );
 }
