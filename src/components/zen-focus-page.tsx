@@ -114,13 +114,14 @@ export function ZenFocusPage() {
     const audio = ambientAudioRef.current;
     if (audio) {
       if (isActive && settings.ambientSound !== 'none') {
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                if (error.name !== 'AbortError') {
-                    console.error("Error playing ambient sound:", error);
-                }
-            });
+        // Check if audio is paused before playing to avoid interruption errors
+        if (audio.paused) {
+          audio.play().catch(error => {
+              // AbortError is expected if another action interrupts playback, so we can ignore it.
+              if (error.name !== 'AbortError') {
+                  console.error("Error playing ambient sound:", error);
+              }
+          });
         }
       } else {
         audio.pause();
