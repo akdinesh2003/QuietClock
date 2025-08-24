@@ -169,7 +169,7 @@ export function ZenFocusPage() {
   
   useEffect(() => {
     document.body.setAttribute('data-theme', settings.selectedTheme);
-    document.title = `${String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:${String(secondsLeft % 60).padStart(2, "0")} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} | ZenFocus`;
+    document.title = `${String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:${String(secondsLeft % 60).padStart(2, "0")} - ${mode.charAt(0).toUpperCase() + mode.slice(1)} | QuietClock`;
   }, [settings.selectedTheme, secondsLeft, mode]);
 
   return (
@@ -179,35 +179,37 @@ export function ZenFocusPage() {
         onSettingsChange={handleSettingsChange}
         sessions={sessions}
       />
-      <Card className="w-full max-w-2xl border-none sm:border-solid bg-transparent sm:bg-card sm:shadow-lg">
-        <CardHeader className="items-center text-center">
-          <CardTitle className="text-2xl font-medium tracking-wide">
-            {mode === "focus"
-              ? "Stay Focused"
-              : mode === "shortBreak"
-              ? "Take a Short Break"
-              : "Take a Long Break"}
-          </CardTitle>
-          <CardDescription>
-             {mode === 'focus' ? `Cycle ${completedCycles + 1} of ${settings.longBreakInterval}` : 'Time to recharge!'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center p-6 sm:p-10">
-          <div className="relative">
-            <Progress value={progress} className="absolute w-full h-full rounded-full" />
-            <div className="relative w-64 h-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center bg-card">
-              <TimerDisplay seconds={secondsLeft} />
+      <div className="flex-grow flex flex-col items-center justify-center">
+        <Card className="w-full max-w-2xl border-none bg-transparent">
+          <CardHeader className="items-center text-center">
+            <CardTitle className="text-2xl font-medium tracking-wide text-foreground/90">
+              {mode === "focus"
+                ? "Stay Focused"
+                : mode === "shortBreak"
+                ? "Take a Short Break"
+                : "Take a Long Break"}
+            </CardTitle>
+            <CardDescription>
+               {mode === 'focus' ? `Cycle ${completedCycles + 1} of ${settings.longBreakInterval}` : 'Time to recharge!'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center p-6 sm:p-10">
+            <div className="relative">
+              <Progress value={progress} className="absolute w-full h-full rounded-full" />
+              <div className="relative w-64 h-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                <TimerDisplay seconds={secondsLeft} />
+              </div>
             </div>
-          </div>
-          <TimerControls
-            isActive={isActive}
-            onStart={() => setIsActive(true)}
-            onPause={() => setIsActive(false)}
-            onReset={resetTimer}
-          />
-        </CardContent>
-      </Card>
-       <div className="w-full max-w-lg flex flex-col items-center mt-8">
+            <TimerControls
+              isActive={isActive}
+              onStart={() => setIsActive(true)}
+              onPause={() => setIsActive(false)}
+              onReset={resetTimer}
+            />
+          </CardContent>
+        </Card>
+      </div>
+       <div className="w-full max-w-lg flex flex-col items-center pb-8 px-4">
         <QuoteDisplay />
         <AmbientSoundPlayer 
           settings={settings} 
