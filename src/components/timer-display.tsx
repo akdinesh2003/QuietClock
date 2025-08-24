@@ -12,7 +12,7 @@ const formatTime = (seconds: number) => {
 
 export function TimerDisplay({ seconds }: TimerDisplayProps) {
   return (
-    <div className="font-mono text-8xl md:text-9xl font-bold tracking-tighter">
+    <div className="font-sans text-7xl md:text-8xl font-bold tracking-tighter text-foreground/90">
       {formatTime(seconds)}
     </div>
   );

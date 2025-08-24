@@ -2,7 +2,8 @@ import { ZenFocusPage } from "@/components/zen-focus-page";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-4 sm:p-8 md:p-12 lg:p-24">
+    <main className="relative min-h-screen w-full overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 via-purple-100/30 to-blue-200/30 dark:from-blue-900/30 dark:via-purple-900/30 dark:to-blue-900/40"></div>
       <ZenFocusPage />
     </main>
   );

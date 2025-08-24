@@ -1,28 +1,45 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { quotes } from "@/lib/quotes";
-import { Card, CardContent } from "@/components/ui/card";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function QuoteDisplay() {
-  const [quote, setQuote] = useState({ quote: "", author: "" });
+  const [index, setIndex] = useState(0);
+
+  const nextQuote = useCallback(() => {
+    setIndex((prevIndex) => (prevIndex + 1) % quotes.length);
+  }, []);
 
   useEffect(() => {
-    setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-  }, []);
+    const interval = setInterval(nextQuote, 10000); 
+    return () => clearInterval(interval);
+  }, [nextQuote]);
+
+  const quote = quotes[index];
 
   if (!quote.quote) {
     return null;
   }
 
   return (
-    <div className="w-full max-w-lg text-center">
-      <blockquote className="text-lg md:text-xl text-muted-foreground italic">
-        "{quote.quote}"
-      </blockquote>
-      <cite className="block text-sm text-muted-foreground/80 mt-2 not-italic">
-        - {quote.author}
-      </cite>
+    <div className="w-full max-w-lg text-center h-24 flex flex-col justify-center">
+       <AnimatePresence mode="wait">
+        <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+        >
+          <blockquote className="text-lg md:text-xl text-muted-foreground italic">
+            "{quote.quote}"
+          </blockquote>
+          <cite className="block text-sm text-muted-foreground/80 mt-2 not-italic">
+            - {quote.author}
+          </cite>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import type { Theme } from "@/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface ThemeSelectorProps {
   selectedTheme: Theme;
@@ -21,11 +22,20 @@ interface ThemeSelectorProps {
 export function ThemeSelector({ selectedTheme, onThemeChange }: ThemeSelectorProps) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Select Theme">
-          <Palette className="h-5 w-5" />
-        </Button>
-      </DropdownMenuTrigger>
+       <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Select Theme">
+                <Palette className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Change Theme</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DropdownMenuContent className="w-40">
         <DropdownMenuLabel>Ambient Theme</DropdownMenuLabel>
         <DropdownMenuSeparator />

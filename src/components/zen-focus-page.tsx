@@ -2,20 +2,18 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Header } from "./header";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
 import { QuoteDisplay } from "./quote-display";
 import type { Settings, Session, TimerMode, AmbientSound } from "@/types";
 import { AmbientSoundPlayer } from "./ambient-sound-player";
+import { SettingsDialog } from "./settings-dialog";
+import { ThemeSelector } from "./theme-selector";
+import { FullscreenButton } from "./fullscreen-button";
+import { AnalyticsSheet } from "./analytics-sheet";
+import { RefreshCw, History } from "lucide-react";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 const DEFAULT_SETTINGS: Settings = {
   focusDuration: 25,
@@ -34,6 +32,7 @@ export function ZenFocusPage() {
   const [mode, setMode] = useState<TimerMode>("focus");
   const [isActive, setIsActive] = useState(false);
   const [completedCycles, setCompletedCycles] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
   const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -54,6 +53,7 @@ export function ZenFocusPage() {
   const [secondsLeft, setSecondsLeft] = useState(durationInSeconds);
 
   const progress = (durationInSeconds - secondsLeft) / durationInSeconds * 100;
+  const circleCircumference = 2 * Math.PI * 140; 
 
   const handleSessionEnd = useCallback(() => {
     const newSession: Session = {
@@ -86,6 +86,7 @@ export function ZenFocusPage() {
 
   useEffect(() => {
     setSecondsLeft(durationInMinutes * 60);
+    setIsActive(false);
   }, [durationInMinutes, settings]);
   
   useEffect(() => {
@@ -126,27 +127,22 @@ export function ZenFocusPage() {
   }, [settings.soundVolume]);
 
   const handleSoundChange = (sound: AmbientSound) => {
-    handleSettingsChange({ ambientSound: sound });
     if (ambientAudioRef.current) {
-        if (sound === 'none') {
-            ambientAudioRef.current.pause();
-        } else {
-            const newAudio = new Audio(`/${sound}.mp3`);
-            newAudio.loop = true;
-            newAudio.volume = settings.soundVolume;
-            ambientAudioRef.current = newAudio;
-            if(isActive) {
-                ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
-            }
-        }
-    } else if (sound !== 'none') {
-        const newAudio = new Audio(`/${sound}.mp3`);
-        newAudio.loop = true;
-        newAudio.volume = settings.soundVolume;
-        ambientAudioRef.current = newAudio;
-        if(isActive) {
-            ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
-        }
+      ambientAudioRef.current.pause();
+    }
+    
+    handleSettingsChange({ ambientSound: sound });
+
+    if (sound !== 'none') {
+      const newAudio = new Audio(`/${sound}.mp3`);
+      newAudio.loop = true;
+      newAudio.volume = settings.soundVolume;
+      ambientAudioRef.current = newAudio;
+      if (isActive) {
+        ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
+      }
+    } else {
+       ambientAudioRef.current = null;
     }
   };
   
@@ -157,14 +153,15 @@ export function ZenFocusPage() {
 
   const handleSettingsChange = (newSettings: Partial<Settings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
-    if(mode === 'focus' && newSettings.focusDuration) {
-       setSecondsLeft(newSettings.focusDuration * 60);
-    } else if (mode === 'shortBreak' && newSettings.shortBreakDuration) {
-        setSecondsLeft(newSettings.shortBreakDuration * 60);
-    } else if (mode === 'longBreak' && newSettings.longBreakDuration) {
-        setSecondsLeft(newSettings.longBreakDuration * 60);
+     if (!isActive) {
+        if (mode === 'focus' && newSettings.focusDuration && newSettings.focusDuration !== settings.focusDuration) {
+            setSecondsLeft(newSettings.focusDuration * 60);
+        } else if (mode === 'shortBreak' && newSettings.shortBreakDuration && newSettings.shortBreakDuration !== settings.shortBreakDuration) {
+            setSecondsLeft(newSettings.shortBreakDuration * 60);
+        } else if (mode === 'longBreak' && newSettings.longBreakDuration && newSettings.longBreakDuration !== settings.longBreakDuration) {
+            setSecondsLeft(newSettings.longBreakDuration * 60);
+        }
     }
-    setIsActive(false);
   };
   
   useEffect(() => {
@@ -173,50 +170,105 @@ export function ZenFocusPage() {
   }, [settings.selectedTheme, secondsLeft, mode]);
 
   return (
-    <>
-      <Header
-        settings={settings}
-        onSettingsChange={handleSettingsChange}
-        sessions={sessions}
-      />
-      <div className="flex-grow flex flex-col items-center justify-center">
-        <Card className="w-full max-w-2xl border-none bg-transparent">
-          <CardHeader className="items-center text-center">
-            <CardTitle className="text-2xl font-medium tracking-wide text-foreground/90">
-              {mode === "focus"
-                ? "Stay Focused"
-                : mode === "shortBreak"
-                ? "Take a Short Break"
-                : "Take a Long Break"}
-            </CardTitle>
-            <CardDescription>
-               {mode === 'focus' ? `Cycle ${completedCycles + 1} of ${settings.longBreakInterval}` : 'Time to recharge!'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center p-6 sm:p-10">
-            <div className="relative">
-              <Progress value={progress} className="absolute w-full h-full rounded-full" />
-              <div className="relative w-64 h-64 sm:w-80 sm:h-80 rounded-full flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="flex h-screen w-full">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 transition-all duration-300 ease-in-out" style={{ marginRight: showHistory ? '320px' : '0' }}>
+          <div className="text-center mb-6">
+              <h1 className="text-2xl font-medium tracking-wide text-foreground/90">
+                {mode === "focus"
+                  ? "Stay Focused"
+                  : mode === "shortBreak"
+                  ? "Take a Short Break"
+                  : "Take a Long Break"}
+              </h1>
+              <p className="text-muted-foreground">
+                 {mode === 'focus' ? `Cycle ${completedCycles + 1} of ${settings.longBreakInterval}` : 'Time to recharge!'}
+              </p>
+          </div>
+
+          <div className="relative w-80 h-80 sm:w-96 sm:h-96">
+            <svg className="absolute inset-0" viewBox="0 0 320 320">
+                <circle
+                    className="text-primary/10"
+                    stroke="currentColor"
+                    strokeWidth="15"
+                    fill="transparent"
+                    r="140"
+                    cx="160"
+                    cy="160"
+                />
+                <circle
+                    className="text-primary transition-all duration-1000 ease-linear"
+                    stroke="currentColor"
+                    strokeWidth="15"
+                    strokeDasharray={circleCircumference}
+                    strokeDashoffset={circleCircumference - (progress / 100) * circleCircumference}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    r="140"
+                    cx="160"
+                    cy="160"
+                    transform="rotate(-90 160 160)"
+                />
+            </svg>
+            <div className="w-full h-full rounded-full flex flex-col items-center justify-center bg-background/30 backdrop-blur-sm">
                 <TimerDisplay seconds={secondsLeft} />
-              </div>
+                 <div className="absolute" style={{ bottom: 'calc(50% - 9rem)' }}>
+                     <TimerControls
+                        isActive={isActive}
+                        onStart={() => setIsActive(true)}
+                        onPause={() => setIsActive(false)}
+                    />
+                </div>
             </div>
-            <TimerControls
-              isActive={isActive}
-              onStart={() => setIsActive(true)}
-              onPause={() => setIsActive(false)}
-              onReset={resetTimer}
-            />
-          </CardContent>
-        </Card>
-      </div>
-       <div className="w-full max-w-lg flex flex-col items-center pb-8 px-4">
-        <QuoteDisplay />
-        <AmbientSoundPlayer 
-          settings={settings} 
-          onSettingsChange={handleSettingsChange}
-          onSoundChange={handleSoundChange}
-        />
-      </div>
-    </>
+          </div>
+        
+          <div className="mt-8 w-full max-w-md flex flex-col items-center">
+            <QuoteDisplay />
+          </div>
+
+          <div className="absolute bottom-6 w-full max-w-sm">
+              <div className="w-full mx-auto p-2.5 rounded-full bg-card/20 backdrop-blur-sm border border-border/20 flex items-center justify-between">
+                <AmbientSoundPlayer 
+                  settings={settings} 
+                  onSettingsChange={handleSettingsChange}
+                  onSoundChange={handleSoundChange}
+                />
+                 <div className="flex items-center gap-1">
+                     <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="ghost" size="icon" onClick={resetTimer}>
+                              <RefreshCw className="h-5 w-5" />
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Reset Timer</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <ThemeSelector selectedTheme={settings.selectedTheme} onThemeChange={(theme) => handleSettingsChange({ selectedTheme: theme })}/>
+                    <SettingsDialog settings={settings} onSettingsChange={handleSettingsChange} />
+                    <FullscreenButton />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button variant="ghost" size="icon" onClick={() => setShowHistory(s => !s)}>
+                              <History className="h-5 w-5" />
+                           </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Toggle History</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                 </div>
+              </div>
+          </div>
+      </main>
+
+      <aside className={`fixed top-0 right-0 h-full w-80 bg-card/20 backdrop-blur-lg border-l border-border/20 shadow-2xl transition-transform duration-300 ease-in-out ${showHistory ? 'translate-x-0' : 'translate-x-full'}`}>
+        <AnalyticsSheet sessions={sessions} />
+      </aside>
+    </div>
   );
 }

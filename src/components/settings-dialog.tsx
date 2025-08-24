@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Settings as SettingsType } from "@/types";
 import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface SettingsDialogProps {
   settings: SettingsType;
@@ -30,11 +31,20 @@ export function SettingsDialog({ settings, onSettingsChange }: SettingsDialogPro
   
   return (
     <Dialog onOpenChange={(open) => !open && setLocalSettings(settings)}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Open Settings">
-          <Settings className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+      <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open Settings">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>Settings</p>
+            </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Timer Settings</DialogTitle>
