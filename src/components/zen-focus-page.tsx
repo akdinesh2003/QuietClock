@@ -111,14 +111,23 @@ export function ZenFocusPage() {
   }, [isActive, secondsLeft]);
 
   useEffect(() => {
-    if (ambientAudioRef.current) {
-        if (isActive && settings.ambientSound !== 'none') {
-            ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
-        } else {
-            ambientAudioRef.current.pause();
+    const audio = ambientAudioRef.current;
+    if (audio) {
+      if (isActive && settings.ambientSound !== 'none') {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                if (error.name !== 'AbortError') {
+                    console.error("Error playing ambient sound:", error);
+                }
+            });
         }
+      } else {
+        audio.pause();
+      }
     }
   }, [isActive, settings.ambientSound]);
+
 
   useEffect(() => {
     if (ambientAudioRef.current) {
@@ -129,6 +138,7 @@ export function ZenFocusPage() {
   const handleSoundChange = (sound: AmbientSound) => {
     if (ambientAudioRef.current) {
       ambientAudioRef.current.pause();
+      ambientAudioRef.current.src = "";
     }
     
     handleSettingsChange({ ambientSound: sound });
@@ -139,7 +149,7 @@ export function ZenFocusPage() {
       newAudio.volume = settings.soundVolume;
       ambientAudioRef.current = newAudio;
       if (isActive) {
-        ambientAudioRef.current.play().catch(e => console.error("Error playing ambient sound:", e));
+        newAudio.play().catch(e => console.error("Error playing ambient sound:", e));
       }
     } else {
        ambientAudioRef.current = null;
