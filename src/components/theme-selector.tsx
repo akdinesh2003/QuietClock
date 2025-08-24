@@ -47,6 +47,8 @@ export function ThemeSelector({ selectedTheme, onThemeChange }: ThemeSelectorPro
           <DropdownMenuRadioItem value="forest">Forest</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="ocean">Ocean</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dusk">Dusk</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="sunset">Sunset</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="mint">Mint</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>

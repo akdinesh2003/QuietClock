@@ -19,6 +19,15 @@ interface ReflectionDialogProps {
   onSubmit: (rating: number) => void;
 }
 
+const focusLevels = [
+  { rating: 1, label: 'Very Unfocused', icon: <Frown className="h-8 w-8 text-red-500" />, color: 'text-red-500' },
+  { rating: 2, label: 'Unfocused', icon: <Frown className="h-8 w-8 text-orange-500" />, color: 'text-orange-500' },
+  { rating: 3, label: 'Neutral', icon: <Meh className="h-8 w-8 text-yellow-500" />, color: 'text-yellow-500' },
+  { rating: 4, label: 'Focused', icon: <Smile className="h-8 w-8 text-green-500" />, color: 'text-green-500' },
+  { rating: 5, label: 'Very Focused', icon: <Smile className="h-8 w-8 text-emerald-500" />, color: 'text-emerald-500' },
+];
+
+
 export function ReflectionDialog({ isOpen, onClose, onSubmit }: ReflectionDialogProps) {
   const [rating, setRating] = useState(3);
 
@@ -26,12 +35,8 @@ export function ReflectionDialog({ isOpen, onClose, onSubmit }: ReflectionDialog
     onSubmit(rating);
     onClose();
   };
-
-  const getEmojiForRating = (value: number) => {
-    if (value <= 2) return <Frown className="h-8 w-8 text-destructive" />;
-    if (value === 3) return <Meh className="h-8 w-8 text-yellow-500" />;
-    return <Smile className="h-8 w-8 text-green-500" />;
-  }
+  
+  const currentFocusLevel = focusLevels[rating - 1];
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -43,8 +48,8 @@ export function ReflectionDialog({ isOpen, onClose, onSubmit }: ReflectionDialog
           </DialogDescription>
         </DialogHeader>
         <div className="py-6 text-center">
-            <div className="mb-4 flex justify-center">
-                {getEmojiForRating(rating)}
+            <div className="mb-4 flex justify-center h-8">
+                {currentFocusLevel.icon}
             </div>
           <Slider
             value={[rating]}
@@ -54,8 +59,8 @@ export function ReflectionDialog({ isOpen, onClose, onSubmit }: ReflectionDialog
             step={1}
             className="w-3/4 mx-auto"
           />
-           <p className="text-sm text-muted-foreground mt-2">
-            {['Very Unfocused', 'Unfocused', 'Neutral', 'Focused', 'Very Focused'][rating - 1]}
+           <p className={`text-sm font-medium mt-3 ${currentFocusLevel.color}`}>
+            {currentFocusLevel.label}
           </p>
         </div>
         <DialogFooter>

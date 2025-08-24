@@ -1,6 +1,6 @@
 export type TimerMode = "focus" | "shortBreak" | "longBreak";
 
-export type Theme = "default" | "forest" | "ocean" | "dusk";
+export type Theme = "default" | "forest" | "ocean" | "dusk" | "sunset" | "mint";
 
 export type AmbientSound = "none" | "rain" | "forest" | "whitenoise";
 
